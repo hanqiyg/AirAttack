@@ -81,11 +81,12 @@ public class TestTiledMapScreen2 implements Screen{
 		hudCamera  = new OrthographicCamera();
 		hudCamera.setToOrtho(false, width, height);	
 		hudRenderer = new OrthogonalTiledMapRenderer(map, 1/64f);
+		System.out.println(hudCamera.viewportWidth + "," + hudCamera.viewportHeight);
 	}
 	public void initHUD(float x,float y,float width,float height){
 		
 	}
-	
+	boolean showMap = false;
 	@Override
 	public void render(float delta) {
 		// clear the screen
@@ -97,18 +98,44 @@ public class TestTiledMapScreen2 implements Screen{
 		if(Gdx.input.isKeyPressed(Keys.O)){
 			zoom(-1f,100f);
 		}
-		if(Gdx.input.isKeyJustPressed(Keys.B)){
-						
+		if(Gdx.input.isKeyJustPressed(Keys.LEFT)){
+			hudCamera.position.x += 1;
+			hudCamera.position.x = MathUtils.clamp(hudCamera.position.x, 0, 30);			
+			hudCamera.update();
+			System.out.println(hudCamera.position);
+		}
+		if(Gdx.input.isKeyJustPressed(Keys.RIGHT)){
+			hudCamera.position.x -= 1;
+			hudCamera.position.x = MathUtils.clamp(hudCamera.position.x, 0, 30);			
+			hudCamera.update();
+			System.out.println(hudCamera.position);
+		}
+		if(Gdx.input.isKeyJustPressed(Keys.UP)){
+			hudCamera.position.y += 1;
+			hudCamera.position.y = MathUtils.clamp(hudCamera.position.y, 0, 30);		
+			hudCamera.update();
+			System.out.println(hudCamera.position);
+		}
+		if(Gdx.input.isKeyJustPressed(Keys.RIGHT)){
+			hudCamera.position.y -= 1;
+			hudCamera.position.y = MathUtils.clamp(hudCamera.position.y, 0, 30);
+			hudCamera.update();
+			System.out.println(hudCamera.position);
+		}
+		if(Gdx.input.isKeyJustPressed(Keys.M)){
+			showMap = !showMap;
+			System.out.println(hudCamera.position);
 		}
 		// get the delta time
 		float deltaTime = Gdx.graphics.getDeltaTime();
 		mapRenderer.setView(mapCamera);
-		mapRenderer.render();
+		mapRenderer.render();		
 		
-		
-		hudCamera.update();
-		hudRenderer.setView(hudCamera);
-		hudRenderer.render();
+		if(showMap){
+			hudCamera.update();
+			hudRenderer.setView(hudCamera);
+			hudRenderer.render();
+		}
 	}
 
 	@Override
