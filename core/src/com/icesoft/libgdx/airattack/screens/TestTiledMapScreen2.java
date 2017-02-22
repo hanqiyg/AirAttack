@@ -81,7 +81,6 @@ public class TestTiledMapScreen2 implements Screen{
 		hudCamera  = new OrthographicCamera();
 		hudCamera.setToOrtho(false, width, height);	
 		hudRenderer = new OrthogonalTiledMapRenderer(map, 1/64f);
-		batch = new SpriteBatch();
 	}
 	public void initHUD(float x,float y,float width,float height){
 		
@@ -107,7 +106,6 @@ public class TestTiledMapScreen2 implements Screen{
 		mapRenderer.render();
 		
 		
-		hudCamera.zoom = 0.1f;
 		hudCamera.update();
 		hudRenderer.setView(hudCamera);
 		hudRenderer.render();
