@@ -48,18 +48,17 @@ import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.Scaling;
 import com.badlogic.gdx.utils.viewport.ScalingViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import com.icesoft.libgdx.TMHUD;
 
 public class TestTiledMapScreen2 implements Screen{
-	private TiledMap map,map2;
-	private OrthogonalTiledMapRenderer mapRenderer, hudRenderer;
+	private TiledMap map;
+	private OrthogonalTiledMapRenderer mapRenderer;
 	private OrthographicCamera mapCamera,hudCamera;
-	private Viewport ScreenViewport;
-	private Viewport HudViewport;
 
 	private GestureDetector gesture;
 	private static final float viewportWidth = 20, viewportHeight = 20;
-	SpriteBatch batch;
-	private int screenWidth = 0, screenHeight = 0;
+	
+	private TMHUD hud;
 	@Override
 	public void show() {
 		gesture =new GestureDetector(new MyGestureListener());
@@ -67,31 +66,27 @@ public class TestTiledMapScreen2 implements Screen{
 		multiplexer.addProcessor(gesture);
 		Gdx.input.setInputProcessor(multiplexer);
 		
-		screenWidth = Gdx.graphics.getWidth();
-		screenHeight = Gdx.graphics.getHeight();
-		
 		// load the map, set the unit scale to 1/16 (1 unit == 16 pixels)
 		map = new TmxMapLoader().load("maps/plane.tmx");
 		mapCamera = new OrthographicCamera();
 		mapCamera.setToOrtho(false, viewportWidth, viewportHeight);		
 		mapRenderer = new OrthogonalTiledMapRenderer(map, 1/16f);
-		
-		int width = map.getProperties().get("width",Integer.class);
-		int height = map.getProperties().get("height",Integer.class);
-		hudCamera  = new OrthographicCamera();
-		hudCamera.setToOrtho(false, width, height);	
-		hudRenderer = new OrthogonalTiledMapRenderer(map, 1/64f);
-		System.out.println(hudCamera.viewportWidth + "," + hudCamera.viewportHeight);
+		hud = new TMHUD(map);
 	}
-	public void initHUD(float x,float y,float width,float height){
-		
-	}
-	boolean showMap = false;
 	@Override
 	public void render(float delta) {
 		// clear the screen
 		Gdx.gl.glClearColor(0.7f, 0.7f, 1.0f, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		controller();		
+		// get the delta time
+		float deltaTime = Gdx.graphics.getDeltaTime();
+		mapRenderer.setView(mapCamera);
+		mapRenderer.render();		
+		hud.render(deltaTime,mapRenderer.getViewBounds());
+	}
+	
+	private void controller() {
 		if(Gdx.input.isKeyPressed(Keys.I)){
 			zoom(1f,100f);
 		}
@@ -99,45 +94,37 @@ public class TestTiledMapScreen2 implements Screen{
 			zoom(-1f,100f);
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.LEFT)){
-			hudCamera.position.x += 1;
-			hudCamera.position.x = MathUtils.clamp(hudCamera.position.x, 0, 30);			
-			hudCamera.update();
-			System.out.println(hudCamera.position);
+			hud.moveLeft();
+			hud.cameraInfo();
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.RIGHT)){
-			hudCamera.position.x -= 1;
-			hudCamera.position.x = MathUtils.clamp(hudCamera.position.x, 0, 30);			
-			hudCamera.update();
-			System.out.println(hudCamera.position);
+			hud.moveRight();
+			hud.cameraInfo();
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.UP)){
-			hudCamera.position.y += 1;
-			hudCamera.position.y = MathUtils.clamp(hudCamera.position.y, 0, 30);		
-			hudCamera.update();
-			System.out.println(hudCamera.position);
+			hud.moveUp();
+			hud.cameraInfo();
 		}
-		if(Gdx.input.isKeyJustPressed(Keys.RIGHT)){
-			hudCamera.position.y -= 1;
-			hudCamera.position.y = MathUtils.clamp(hudCamera.position.y, 0, 30);
-			hudCamera.update();
-			System.out.println(hudCamera.position);
+		if(Gdx.input.isKeyJustPressed(Keys.DOWN)){
+			hud.moveDown();
+			hud.cameraInfo();
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.M)){
-			showMap = !showMap;
-			System.out.println(hudCamera.position);
+			hud.changeDisplay();
+			hud.cameraInfo();
 		}
-		// get the delta time
-		float deltaTime = Gdx.graphics.getDeltaTime();
-		mapRenderer.setView(mapCamera);
-		mapRenderer.render();		
-		
-		if(showMap){
-			hudCamera.update();
-			hudRenderer.setView(hudCamera);
-			hudRenderer.render();
+		if(Gdx.input.isKeyJustPressed(Keys.Q)){
+			hud.zoomIn();
+			hud.cameraInfo();
+		}
+		if(Gdx.input.isKeyJustPressed(Keys.W)){
+			hud.zoomOut();
+			hud.cameraInfo();
+		}
+		if(Gdx.input.isKeyJustPressed(Keys.S)){
+			hud.saveConfigToPreferences();
 		}
 	}
-
 	@Override
 	public void resize(int width, int height) {
 		// TODO Auto-generated method stub
@@ -169,9 +156,7 @@ public class TestTiledMapScreen2 implements Screen{
 	}
 	public void zoom(float originalDistance, float currentDistance){
 		float ratio = originalDistance/currentDistance;
-        System.out.println(ratio);
         mapCamera.zoom += ZOOM_SPEED * ratio;
-        System.out.println(mapCamera.zoom);
        if (mapCamera.zoom < 0.3)
         {
     	   mapCamera.zoom = (float) 0.3;
@@ -181,20 +166,16 @@ public class TestTiledMapScreen2 implements Screen{
         	mapCamera.zoom = 2;
         }
        	mapCamera.update();
-        System.out.println(mapCamera.zoom);
 	}
 	public void move(float deltaX, float deltaY){
-		System.out.println("deltaX:" + deltaX +", deltaY:" + deltaY);
         float MinX = 0;
         float MinY = 0;
         float MaxX = mapCamera.viewportWidth * mapCamera.zoom;
         float MaxY = mapCamera.viewportHeight * mapCamera.zoom;
-        System.out.println("MaxX:" + MaxX +", MaxY:" + MaxY);
         mapCamera.position.x = MathUtils.clamp(mapCamera.position.x, MinX, MaxX);
         mapCamera.position.y = MathUtils.clamp(mapCamera.position.y, MinY, MaxY);
         mapCamera.translate(-deltaX * PAN_RATE, deltaY * PAN_RATE,   0);
-        System.out.println("trX:" + -deltaX * PAN_RATE +", trY:" + deltaY * PAN_RATE);
-        mapCamera.update();        
+        mapCamera.update();    
 	}
 	
 	public static final float PAN_RATE = (float) 0.01;
