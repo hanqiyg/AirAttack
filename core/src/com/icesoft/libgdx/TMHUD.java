@@ -12,6 +12,8 @@ import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 
 public class TMHUD {
 	private static final String PREFERENCE_NAME = "HUDConfig";
@@ -77,33 +79,13 @@ public class TMHUD {
 	    
 	    shapeRenderer.setColor(Color.BLACK);	    
 		shapeRenderer.begin(ShapeType.Line);
-		shapeRenderer.rect(0, 0, camera.viewportWidth - camera.position.x, camera.viewportHeight - camera.position.y);
+		shapeRenderer.rect(0, 0, camera.viewportWidth,camera.viewportHeight);
 		
 		shapeRenderer.end();
 	    shapeRenderer.setColor(Color.RED);	    
 		shapeRenderer.begin(ShapeType.Line);
-		float x=0,y=0,w=0,h=0;
-		if(r.x <0){
-			w = r.width + r.x;
-			x = 0;
-		}else if((r.x + r.width) > camera.viewportWidth - camera.position.x ){
-			x = r.x;
-			w = camera.viewportWidth- camera.position.x - r.x;
-		}else{
-			x = r.x;
-			w = r.width;
-		}
-		if(r.y <0){
-			h = r.height + r.y;
-			y = 0;
-		}else if((r.y + r.height) > camera.viewportHeight - camera.position.y ){
-			y = r.y;
-			h = camera.viewportHeight -camera.position.y- r.y;
-		}else{
-			y = r.y;
-			h = r.height;
-		}		
-		shapeRenderer.rect(x, y, w, h);
+	
+		shapeRenderer.rect(r.x, r.y, r.width, r.height);
 		shapeRenderer.end();
 		
 
