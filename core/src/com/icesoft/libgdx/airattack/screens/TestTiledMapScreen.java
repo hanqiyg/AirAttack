@@ -20,26 +20,33 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 import com.icesoft.libgdx.TMHUD;
 
-public class TestTiledMapScreen2 implements Screen{
+public class TestTiledMapScreen implements Screen{
 	private TiledMap map;
-	private OrthogonalTiledMapRenderer mapRenderer;
-	private OrthographicCamera mapCamera;
+	private OrthogonalTiledMapRenderer mapRenderer,hudRenderer;
+	private OrthographicCamera mapCamera,hudCamera;
+	private Viewport mapView,hudView;
 
 	private GestureDetector gesture;
 	private static final float viewportWidth = 20, viewportHeight = 20;
-	
+	ShapeRenderer shapeRenderer;
 	private TMHUD hud;
 	@Override
 	public void show() {
@@ -50,10 +57,18 @@ public class TestTiledMapScreen2 implements Screen{
 		
 		// load the map, set the unit scale to 1/16 (1 unit == 16 pixels)
 		map = new TmxMapLoader().load("maps/plane.tmx");
-		mapCamera = new OrthographicCamera();
-		mapCamera.setToOrtho(false, viewportWidth, viewportHeight);		
-		mapRenderer = new OrthogonalTiledMapRenderer(map, 1/16f);
-		hud = new TMHUD(map);
+		mapCamera = new OrthographicCamera(20,20);
+		mapView = new FitViewport(mapCamera.viewportWidth,mapCamera.viewportHeight,mapCamera);
+		mapRenderer = new OrthogonalTiledMapRenderer(map, 1/32f);
+		mapView.setScreenBounds(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		mapCamera.position.set(10,10,0);
+		
+		hudCamera = new OrthographicCamera(30,30);
+		hudView = new FitViewport(hudCamera.viewportWidth,hudCamera.viewportHeight,hudCamera);
+		hudView.setScreenBounds(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2, Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2);
+		hudRenderer = new OrthogonalTiledMapRenderer(map, 1/32f);
+		hudCamera.position.set(15,15,0);
+		shapeRenderer = new ShapeRenderer();
 	}
 	@Override
 	public void render(float delta) {
@@ -63,9 +78,26 @@ public class TestTiledMapScreen2 implements Screen{
 		controller();		
 		// get the delta time
 		float deltaTime = Gdx.graphics.getDeltaTime();
+		
 		mapRenderer.setView(mapCamera);
-		mapRenderer.render();		
-		hud.render(deltaTime,mapRenderer.getViewBounds());
+		mapCamera.update();
+		mapView.apply();
+		mapRenderer.render();	
+		
+		hudRenderer.setView(hudCamera);
+		hudCamera.update();
+		hudView.apply();
+		hudRenderer.render();		
+		
+		Rectangle r = mapRenderer.getViewBounds();
+		float offset = 0.01f;
+	    shapeRenderer.setProjectionMatrix(hudCamera.combined);
+
+	    shapeRenderer.setColor(Color.RED);	    
+		shapeRenderer.begin(ShapeType.Line);
+		shapeRenderer.rect(r.x ,r.y , r.width,r.height );
+		shapeRenderer.rect(offset,offset,30-offset,30-offset);
+		shapeRenderer.end();
 	}
 	
 	private void controller() {
@@ -76,44 +108,30 @@ public class TestTiledMapScreen2 implements Screen{
 			zoom(-1f,100f);
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.LEFT)){
-			hud.moveLeft();
-			hud.cameraInfo();
+			hudCamera.position.x += 1;
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.RIGHT)){
-			hud.moveRight();
-			hud.cameraInfo();
+			hudCamera.position.x -= 1;
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.UP)){
-			hud.moveUp();
-			hud.cameraInfo();
+			hudCamera.position.y += 1;
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.DOWN)){
-			hud.moveDown();
-			hud.cameraInfo();
+			hudCamera.position.y -= 1;
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.M)){
-			hud.changeDisplay();
-			hud.cameraInfo();
+		
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.Q)){
-			hud.zoomIn();
-			hud.cameraInfo();
+			hudCamera.zoom +=1;
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.W)){
-			hud.zoomOut();
-			hud.cameraInfo();
+			hudCamera.zoom -=1;
 		}
 		if(Gdx.input.isKeyJustPressed(Keys.S)){
-			hud.saveConfigToPreferences();
 		}
 		
 		if(Gdx.input.isKeyJustPressed(Keys.C)){
-			hud.cameraInfo();
-			System.out.println(
-					"Position:" + mapCamera.position.toString() + 
-					" Zoom:" + mapCamera.zoom + 
-					" Projection:" + mapCamera.projection.toString());	
-			System.out.println(mapRenderer.getViewBounds());
 		}
 	}
 	@Override

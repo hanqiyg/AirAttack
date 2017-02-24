@@ -5,6 +5,7 @@ import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -55,7 +56,6 @@ public class TMHUD {
 		this.config = config;
 		init();
 	}
-
 	private void init() {
 		camera = new OrthographicCamera();
 		camera.setToOrtho(false, config.displayWidth, config.displayHeight);	
@@ -68,19 +68,45 @@ public class TMHUD {
 			camera.update();
 			renderer.render();	
 			if(r != null){
-				drawScope(renderer.getBatch(),r);
+				drawScope(r);
 			}
 		}		
 	}
-	public void drawScope(Batch batch,Rectangle r){	
-	    shapeRenderer.setProjectionMatrix(batch.getProjectionMatrix());
-	    shapeRenderer.setTransformMatrix(batch.getTransformMatrix());
-	    shapeRenderer.translate(r.x,r.y,0);
-   
-		shapeRenderer.setColor(Color.RED);
+	public void drawScope(Rectangle r){		
+	    shapeRenderer.setProjectionMatrix(camera.combined);
+	    
+	    shapeRenderer.setColor(Color.BLACK);	    
 		shapeRenderer.begin(ShapeType.Line);
-		shapeRenderer.rect(r.x, r.y, r.width, r.height);
+		shapeRenderer.rect(0, 0, camera.viewportWidth - camera.position.x, camera.viewportHeight - camera.position.y);
+		
 		shapeRenderer.end();
+	    shapeRenderer.setColor(Color.RED);	    
+		shapeRenderer.begin(ShapeType.Line);
+		float x=0,y=0,w=0,h=0;
+		if(r.x <0){
+			w = r.width + r.x;
+			x = 0;
+		}else if((r.x + r.width) > camera.viewportWidth - camera.position.x ){
+			x = r.x;
+			w = camera.viewportWidth- camera.position.x - r.x;
+		}else{
+			x = r.x;
+			w = r.width;
+		}
+		if(r.y <0){
+			h = r.height + r.y;
+			y = 0;
+		}else if((r.y + r.height) > camera.viewportHeight - camera.position.y ){
+			y = r.y;
+			h = camera.viewportHeight -camera.position.y- r.y;
+		}else{
+			y = r.y;
+			h = r.height;
+		}		
+		shapeRenderer.rect(x, y, w, h);
+		shapeRenderer.end();
+		
+
 	}
 	public void zoomIn(){
 		camera.zoom += config.zoomStep;
@@ -110,8 +136,12 @@ public class TMHUD {
 		camera.zoom = 1;
 		camera.position.set(0,0,0);
 	}
+	
 	public void cameraInfo(){
-		System.out.println("isDisplay:" + config.display + "Position:" + camera.position + " Zoom:" + camera.zoom + " Projection:" + camera.projection);	
+		System.out.println("isDisplay:" + config.display + 
+				"Position:" + camera.position.toString() + 
+				" Zoom:" + camera.zoom + 
+				" Projection:" + camera.projection.toString());	
 	}
 	public void changeDisplay(){
 		config.display = ! config.display;
@@ -189,6 +219,7 @@ public class TMHUD {
 			if(fullMap){
 				this.displayWidth  = map.getProperties().get("width",  Integer.class);
 				this.displayHeight = map.getProperties().get("height", Integer.class);
+				System.out.println(this.displayWidth + "," + this.displayHeight);
 			}
 		}
 	}
