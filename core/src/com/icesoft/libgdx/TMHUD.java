@@ -79,12 +79,11 @@ public class TMHUD {
 	    
 	    shapeRenderer.setColor(Color.BLACK);	    
 		shapeRenderer.begin(ShapeType.Line);
-		shapeRenderer.rect(0, 0, camera.viewportWidth,camera.viewportHeight);
-		
+		shapeRenderer.rect(0, 0, camera.viewportWidth,camera.viewportHeight);		
 		shapeRenderer.end();
+		
 	    shapeRenderer.setColor(Color.RED);	    
-		shapeRenderer.begin(ShapeType.Line);
-	
+		shapeRenderer.begin(ShapeType.Line);	
 		shapeRenderer.rect(r.x, r.y, r.width, r.height);
 		shapeRenderer.end();
 		

@@ -22,15 +22,15 @@ import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.icesoft.libgdx.TMHUD;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
+import com.icesoft.libgdx.hud.TMHUD;
 
 public class TestTiledMapScreen2 implements Screen{
 	private TiledMap map;
@@ -38,9 +38,11 @@ public class TestTiledMapScreen2 implements Screen{
 	private OrthographicCamera mapCamera;
 
 	private GestureDetector gesture;
-	private static final float viewportWidth = 20, viewportHeight = 20;
-	
+	private static final float viewportWidth = 10, viewportHeight = 10;
+	private Viewport viewport;
 	private TMHUD hud;
+	
+	private static final float scale = 1 / 64f;
 	@Override
 	public void show() {
 		gesture =new GestureDetector(new MyGestureListener());
@@ -50,10 +52,12 @@ public class TestTiledMapScreen2 implements Screen{
 		
 		// load the map, set the unit scale to 1/16 (1 unit == 16 pixels)
 		map = new TmxMapLoader().load("maps/plane.tmx");
-		mapCamera = new OrthographicCamera();
-		mapCamera.setToOrtho(false, viewportWidth, viewportHeight);		
-		mapRenderer = new OrthogonalTiledMapRenderer(map, 1/16f);
-		hud = new TMHUD(map);
+		mapCamera = new OrthographicCamera(viewportWidth, viewportHeight);
+		mapRenderer = new OrthogonalTiledMapRenderer(map,scale);
+		viewport = new FitViewport(viewportWidth, viewportHeight,mapCamera);
+		viewport.setScreenBounds(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		viewport.apply(true);
+		hud = new TMHUD(map,scale);
 	}
 	@Override
 	public void render(float delta) {
@@ -63,8 +67,12 @@ public class TestTiledMapScreen2 implements Screen{
 		controller();		
 		// get the delta time
 		float deltaTime = Gdx.graphics.getDeltaTime();
+		
 		mapRenderer.setView(mapCamera);
-		mapRenderer.render();		
+		mapCamera.update();
+		viewport.apply();
+		mapRenderer.render();
+		
 		hud.render(deltaTime,mapRenderer.getViewBounds());
 	}
 	
@@ -75,19 +83,19 @@ public class TestTiledMapScreen2 implements Screen{
 		if(Gdx.input.isKeyPressed(Keys.O)){
 			zoom(-1f,100f);
 		}
-		if(Gdx.input.isKeyJustPressed(Keys.LEFT)){
+		if(Gdx.input.isKeyPressed(Keys.LEFT)){
 			hud.moveLeft();
 			hud.cameraInfo();
 		}
-		if(Gdx.input.isKeyJustPressed(Keys.RIGHT)){
+		if(Gdx.input.isKeyPressed(Keys.RIGHT)){
 			hud.moveRight();
 			hud.cameraInfo();
 		}
-		if(Gdx.input.isKeyJustPressed(Keys.UP)){
+		if(Gdx.input.isKeyPressed(Keys.UP)){
 			hud.moveUp();
 			hud.cameraInfo();
 		}
-		if(Gdx.input.isKeyJustPressed(Keys.DOWN)){
+		if(Gdx.input.isKeyPressed(Keys.DOWN)){
 			hud.moveDown();
 			hud.cameraInfo();
 		}
@@ -103,7 +111,7 @@ public class TestTiledMapScreen2 implements Screen{
 			hud.zoomOut();
 			hud.cameraInfo();
 		}
-		if(Gdx.input.isKeyJustPressed(Keys.S)){
+		if(Gdx.input.isKeyPressed(Keys.S)){
 			hud.saveConfigToPreferences();
 		}
 		
@@ -114,6 +122,10 @@ public class TestTiledMapScreen2 implements Screen{
 					" Zoom:" + mapCamera.zoom + 
 					" Projection:" + mapCamera.projection.toString());	
 			System.out.println(mapRenderer.getViewBounds());
+		}
+		if(Gdx.input.isKeyJustPressed(Keys.R)){
+			hud.resetHud();
+			hud.cameraInfo();
 		}
 	}
 	@Override
